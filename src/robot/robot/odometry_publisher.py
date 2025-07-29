@@ -63,6 +63,9 @@ class OdometryPublisher(Node):
         self.wheel_radius = 0.0325
         self.wheel_separation = 0.269
         self.ticks_per_revolution = 2373  # Zachowana wartość
+        self.linear_slip_factor = 1.437  # do ruchu liniowego
+        self.angular_slip_factor_left = 1.171  # Dla obrotu w lewo (przykładowa wartość)
+        self.angular_slip_factor_right = 1.171  # Dla obrotu w prawo (przykładowa wartość)
 
         # --- Piny GPIO dla enkoderów (numery BCM) ---
         self.front_left_encoder_pin_a = 26
@@ -103,7 +106,7 @@ class OdometryPublisher(Node):
         self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
         self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', 10)
         self.timer = self.create_timer(0.02, self.update_odometry)  # 50 Hz
-        self.get_logger().info("OdometryPublisher node started with full quadrature decoding.")
+        self.get_logger().info("OdometryPublisher node started with full quadrature decoding and separate angular slip factors.")
 
     def update_odometry(self):
         current_time = self.get_clock().now()
@@ -169,10 +172,12 @@ class OdometryPublisher(Node):
         self.prev_delta_left = delta_left_wheel_dist
         self.prev_delta_right = delta_right_wheel_dist
 
-        LINEAR_SLIP_FACTOR = 1.437  # Na podstawie danych dla 1 m i 2 m
-        ANGULAR_SLIP_FACTOR = 1.171  # Do kalibracji w testach obrotowych
-        delta_linear = (delta_left_wheel_dist + delta_right_wheel_dist) / 2.0 * LINEAR_SLIP_FACTOR
-        delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation * ANGULAR_SLIP_FACTOR
+        delta_linear = (delta_left_wheel_dist + delta_right_wheel_dist) / 2.0 * self.linear_slip_factor
+        delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation
+        # Wybór współczynnika poślizgu w zależności od kierunku obrotu
+        angular_slip_factor = self.angular_slip_factor_left if delta_angular >= 0 else self.angular_slip_factor_right
+        delta_angular *= angular_slip_factor
+
         self.x += delta_linear * math.cos(self.theta + delta_angular / 2.0)
         self.y += delta_linear * math.sin(self.theta + delta_angular / 2.0)
         self.theta += delta_angular
@@ -231,4 +236,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-   
