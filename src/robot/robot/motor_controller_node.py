@@ -13,7 +13,7 @@ from rclpy.duration import Duration
 MAKSYMALNA_PREDKOSC = 0.60
 
 # Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyyniki i robot jedzie w miare prosto.
-WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.9
+WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.90
 WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.7
 
 # ###########################################################################
