@@ -173,10 +173,17 @@ class OdometryPublisher(Node):
         self.prev_delta_right = delta_right_wheel_dist
 
         delta_linear = (delta_left_wheel_dist + delta_right_wheel_dist) / 2.0 * self.linear_slip_factor
-        delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation
-        # Wybór współczynnika poślizgu w zależności od kierunku obrotu
-        angular_slip_factor = self.angular_slip_factor_left if delta_angular >= 0 else self.angular_slip_factor_right
-        delta_angular *= angular_slip_factor
+        
+        # Dodanie progu MIN_TICK_DIFF
+        MIN_TICK_DIFF = 5
+        delta_ticks_left = (delta_ticks_front_left + delta_ticks_rear_left) / 2.0
+        delta_ticks_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
+        if abs(delta_ticks_left - delta_ticks_right) < MIN_TICK_DIFF:
+            delta_angular = 0.0
+        else:
+            delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation
+            angular_slip_factor = self.angular_slip_factor_left if delta_angular >= 0 else self.angular_slip_factor_right
+            delta_angular *= angular_slip_factor
 
         self.x += delta_linear * math.cos(self.theta + delta_angular / 2.0)
         self.y += delta_linear * math.sin(self.theta + delta_angular / 2.0)
