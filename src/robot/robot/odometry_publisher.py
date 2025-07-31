@@ -64,8 +64,8 @@ class OdometryPublisher(Node):
         self.wheel_separation = 0.269
         self.ticks_per_revolution = 2373  # Zachowana wartość
         self.linear_slip_factor = 1.437  # do ruchu liniowego
-        self.angular_slip_factor_left = 1.171  # Dla obrotu w lewo (przykładowa wartość)
-        self.angular_slip_factor_right = 1.171  # Dla obrotu w prawo (przykładowa wartość)
+        self.angular_slip_factor_left = 1.34  # Dla obrotu w lewo (przykładowa wartość)
+        self.angular_slip_factor_right = 1.274  # Dla obrotu w prawo (przykładowa wartość)
 
         # --- Piny GPIO dla enkoderów (numery BCM) ---
         self.front_left_encoder_pin_a = 26
