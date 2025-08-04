@@ -10,7 +10,8 @@ from rclpy.duration import Duration
 # ###########################################################################
 
 # Ograniczenie prędkości do niezawodnego poziomu, przy którym enkodery nie gubią impulsów.
-MAKSYMALNA_PREDKOSC = 0.60
+MAKSYMALNA_PREDKOSC = 0.60  #z stepdownem
+#MAKSYMALNA_PREDKOSC = 0.35 #bez stepdowna
 
 # Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyyniki i robot jedzie w miare prosto.
 WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.95

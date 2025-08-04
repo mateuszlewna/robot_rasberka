@@ -18,7 +18,6 @@ def generate_launch_description():
         default_value=os.path.join(get_package_share_directory(pkg_name), 'config', 'slam_params.yaml'),
         description='Full path to the ROS2 parameters file to use for the slam_toolbox node')
     
-
     # Argument 'use_sim_time'
     declare_use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
@@ -26,17 +25,13 @@ def generate_launch_description():
         description='Use simulation/centralized clock if true')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    # --- ZMIANA START ---
-    # Zamiast wczytywać plik w Pythonie, tworzymy komendę,
-    # którą system launch wykona w czasie rzeczywistym.
     robot_description_command = Command(['xacro ', urdf_path])
-    # --- ZMIANA KONIEC ---
 
     return LaunchDescription([
         declare_use_sim_time_arg,
         declare_params_file_cmd,
 
-        # Węzeł : Odometria
+        # Węzeł 1: Odometria
         Node(
             package=pkg_name,
             executable='odometry_publisher',
@@ -52,7 +47,6 @@ def generate_launch_description():
             name='robot_state_publisher',
             output='screen',
             parameters=[
-                # Przekazujemy wynik tej samej komendy również tutaj
                 {'robot_description': robot_description_command},
                 {'use_sim_time': use_sim_time}
             ],
@@ -73,9 +67,16 @@ def generate_launch_description():
             ]
         ),
 
-
-        
-
-     
+        # Węzeł 4: TF2 Buffer Server
+        Node(
+            package='tf2_ros',
+            executable='buffer_server',
+            name='tf2_buffer_server',
+            output='screen',
+            parameters=[
+                {'buffer_size': 10.0},  # Set buffer size to 10 seconds
+                {'use_sim_time': use_sim_time}
+            ]
+        ),
 
     ])
