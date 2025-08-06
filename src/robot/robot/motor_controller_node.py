@@ -10,12 +10,16 @@ from rclpy.duration import Duration
 # ###########################################################################
 
 # Ograniczenie prędkości do niezawodnego poziomu, przy którym enkodery nie gubią impulsów.
-MAKSYMALNA_PREDKOSC = 0.60  #z stepdownem
-#MAKSYMALNA_PREDKOSC = 0.35 #bez stepdowna
+MAKSYMALNA_PREDKOSC = 0.60  # z stepdownem
+#MAKSYMALNA_PREDKOSC = 0.35 # bez stepdowna
 
-# Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyyniki i robot jedzie w miare prosto.
+# Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyniki i robot jedzie w miarę prosto.
 WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.95
 WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.7
+
+# Współczynniki dla skrętu po łuku (z drugiego skryptu)
+TURN_SLOW_SPEED_FACTOR = 0.3  # 30% prędkości dla wolniejszego silnika podczas skrętu
+TURN_FAST_SPEED_FACTOR = 1.0  # 100% prędkości dla szybszego silnika podczas skrętu
 
 # ###########################################################################
 # ## KONFIGURACJA SPRZĘTOWA
@@ -76,22 +80,39 @@ class MotorControllerNode(Node):
         linear_x = msg.linear.x
         angular_z = msg.angular.z * WSPOLCZYNNIK_KOREKCYJNY_OBROTOW
 
-        # 1. Obliczenie bazowych prędkości dla obu stron
-        right_speed = linear_x + angular_z
-        left_speed = linear_x - angular_z
+        # Obliczenie prędkości dla silników
+        if abs(linear_x) > 0 and abs(angular_z) > 0.1:  # Arc turn (u, o, m, , keys: forward/backward + rotation)
+            # Skręt po łuku: jeden silnik wolniejszy, drugi szybszy
+            base_speed = abs(linear_x)  # Użyj |linear_x| jako bazowej prędkości
+            base_speed = min(base_speed, MAKSYMALNA_PREDKOSC)  # Ograniczenie prędkości
+            
+            if angular_z > 0:  # Skręt w lewo (u: forward-left, m: backward-left)
+                left_speed = base_speed * TURN_SLOW_SPEED_FACTOR
+                right_speed = base_speed * TURN_FAST_SPEED_FACTOR
+            else:  # Skręt w prawo (o: forward-right, ,: backward-right)
+                left_speed = base_speed * TURN_FAST_SPEED_FACTOR
+                right_speed = base_speed * TURN_SLOW_SPEED_FACTOR
+            
+            # Zastosowanie współczynnika korekcyjnego dla prawej strony
+            right_speed *= WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY
+            
+            # Kierunek ruchu (przód/tył)
+            if linear_x < 0:  # Dla ruchu wstecz (m, ,)
+                left_speed = -left_speed
+                right_speed = -right_speed
+        else:
+            # Oryginalna logika dla ruchu prosto (i), obrotu w miejscu (l), lub wstecz bez skrętu (j)
+            right_speed = linear_x + angular_z
+            left_speed = linear_x - angular_z
+            right_speed *= WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY
+            left_speed *= MAKSYMALNA_PREDKOSC
+            right_speed *= MAKSYMALNA_PREDKOSC
 
-        # 2. Zastosowanie współczynnika kalibracyjnego dla prawej strony
-        right_speed *= WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY
-
-        # 3. Zastosowanie globalnego ograniczenia prędkości
-        right_speed *= MAKSYMALNA_PREDKOSC
-        left_speed *= MAKSYMALNA_PREDKOSC
-
-        # 4. Ostateczne zabezpieczenie przed przekroczeniem zakresu
+        # Ostateczne zabezpieczenie przed przekroczeniem zakresu
         right_speed = max(min(right_speed, 1.0), -1.0)
         left_speed = max(min(left_speed, 1.0), -1.0)
         
-        # 5. Ustawienie silników (z uwzględnieniem ewentualnej inwersji)
+        # Ustawienie silników (z uwzględnieniem inwersji)
         self.set_motors(-left_speed, -right_speed)
 
     def check_timeout(self):
