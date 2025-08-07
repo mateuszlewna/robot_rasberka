@@ -152,11 +152,6 @@ class OdometryPublisher(Node):
         if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
             delta_ticks_front_right = delta_ticks_rear_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
 
-        # Logowanie danych z enkoderów i obliczeń
-        self.get_logger().debug(f"Encoders: FL={delta_ticks_front_left:.2f}, RL={delta_ticks_rear_left:.2f}, "
-                               f"FR={delta_ticks_front_right:.2f}, RR={delta_ticks_rear_right:.2f}, "
-                               f"X={self.x:.3f}, Y={self.y:.3f}, Theta={self.theta:.3f}")
-
         # --- SEKCJA OBLICZEŃ ---
         dist_per_tick = (2 * math.pi * self.wheel_radius) / self.ticks_per_revolution
         
@@ -182,8 +177,13 @@ class OdometryPublisher(Node):
             delta_angular = 0.0
         else:
             delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation
-            angular_slip_factor = self.angular_slip_factor_left if delta_angular >= 0 else self.angular_slip_factor_right
-            delta_angular *= angular_slip_factor
+            # Wykrywanie obrotu w miejscu (przeciwne znaki kół)
+            is_rotation = delta_left_wheel_dist * delta_right_wheel_dist < 0
+            angular_slip_factor = self.angular_slip_factor_right if delta_angular >= 0 else self.angular_slip_factor_left
+            if not is_rotation:
+                delta_angular = -delta_angular * angular_slip_factor  # Negacja dla łuków
+            else:
+                delta_angular *= angular_slip_factor  # Bez negacji dla obrotów
 
         self.x += delta_linear * math.cos(self.theta + delta_angular / 2.0)
         self.y += delta_linear * math.sin(self.theta + delta_angular / 2.0)
