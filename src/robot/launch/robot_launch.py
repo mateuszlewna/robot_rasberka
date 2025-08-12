@@ -40,6 +40,15 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
         ),
 
+        # Węzeł 1: Odometria z IMU
+        # Node(
+        #     package=pkg_name,
+        #     executable='Odometr_IMU',
+        #     name='robot_odometry_imu_publisher',
+        #     output='screen',
+        #     parameters=[{'use_sim_time': use_sim_time}],
+        # ),
+
         # Węzeł 2: Robot State Publisher
         Node(
             package='robot_state_publisher',

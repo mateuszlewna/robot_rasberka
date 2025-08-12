@@ -10,7 +10,7 @@ from rclpy.duration import Duration
 # ###########################################################################
 
 # Ograniczenie prędkości do niezawodnego poziomu, przy którym enkodery nie gubią impulsów.
-MAKSYMALNA_PREDKOSC = 0.60  # z stepdownem
+MAKSYMALNA_PREDKOSC = 0.6  # z stepdownem
 #MAKSYMALNA_PREDKOSC = 0.35 # bez stepdowna
 
 # Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyniki i robot jedzie w miarę prosto.
@@ -20,6 +20,10 @@ WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.7
 # Współczynniki dla skrętu po łuku (z drugiego skryptu)
 TURN_SLOW_SPEED_FACTOR = 0.3  # 30% prędkości dla wolniejszego silnika podczas skrętu
 TURN_FAST_SPEED_FACTOR = 1.0  # 100% prędkości dla szybszego silnika podczas skrętu
+
+# # Minimalna prędkość dla Nav2 (60% maksymalnej prędkości)
+# MINIMUM_NAV2_SPEED = 0.6 * MAKSYMALNA_PREDKOSC
+# NAV2_THRESHOLD = 0.2  # Próg dla wykrywania małych wartości z Nav2
 
 # ###########################################################################
 # ## KONFIGURACJA SPRZĘTOWA
@@ -104,6 +108,15 @@ class MotorControllerNode(Node):
             # Oryginalna logika dla ruchu prosto (i), obrotu w miejscu (l), lub wstecz bez skrętu (j)
             right_speed = linear_x + angular_z
             left_speed = linear_x - angular_z
+
+            # # Skalowanie dla Nav2: jeśli prędkość jest mała, ustaw minimum na 60% MAKSYMALNA_PREDKOSC
+            # if 0 < abs(left_speed) < NAV2_THRESHOLD:
+            #     left_speed = MINIMUM_NAV2_SPEED * (-1 if left_speed < 0 else 1)
+            #     self.get_logger().info(f'Skalowanie lewej prędkości Nav2: {left_speed} -> {MINIMUM_NAV2_SPEED * (-1 if left_speed < 0 else 1)}')
+            # if 0 < abs(right_speed) < NAV2_THRESHOLD:
+            #     right_speed = MINIMUM_NAV2_SPEED * (-1 if right_speed < 0 else 1)
+            #     self.get_logger().info(f'Skalowanie prawej prędkości Nav2: {right_speed} -> {MINIMUM_NAV2_SPEED * (-1 if right_speed < 0 else 1)}')
+
             right_speed *= WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY
             left_speed *= MAKSYMALNA_PREDKOSC
             right_speed *= MAKSYMALNA_PREDKOSC
