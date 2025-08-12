@@ -43,7 +43,7 @@ def generate_launch_description():
         # Węzeł 1: Odometria z IMU
         # Node(
         #     package=pkg_name,
-        #     executable='Odometr_IMU',
+        #     executable='odometry_IMU',
         #     name='robot_odometry_imu_publisher',
         #     output='screen',
         #     parameters=[{'use_sim_time': use_sim_time}],
@@ -87,5 +87,14 @@ def generate_launch_description():
                 {'use_sim_time': use_sim_time}
             ]
         ),
+
+        # Węzeł 5: Motor controller
+
+        #  Node(
+        #     package='robot',
+        #     executable='motor_controller_node', 
+        #     name='motor_controller',
+        #     output='screen'
+        # ),
 
     ])

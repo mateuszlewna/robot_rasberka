@@ -8,10 +8,7 @@ from tf2_ros import TransformBroadcaster
 import math
 import RPi.GPIO as GPIO
 import time
-from sensor_msgs.msg import JointState, Imu
-import board
-import busio
-import adafruit_adxl34x
+from sensor_msgs.msg import JointState
 
 # Klasa do obsługi pojedynczego enkodera kwadraturowego
 class Encoder:
@@ -90,23 +87,6 @@ class OdometryPublisher(Node):
         self.front_right_encoder = Encoder(self.front_right_encoder_pin_a, self.front_right_encoder_pin_b, "front_right")
         self.rear_right_encoder = Encoder(self.rear_right_encoder_pin_a, self.rear_right_encoder_pin_b, "rear_right")
 
-        # --- Inicjalizacja IMU (akcelerometru) ---
-        try:
-            self.i2c = busio.I2C(board.SCL, board.SDA)
-            self.accelerometer = adafruit_adxl34x.ADXL345(self.i2c, address=0x1D)
-            self.accelerometer.range = adafruit_adxl34x.Range.RANGE_2_G
-        except ValueError as e:
-            self.get_logger().error(f"Błąd inicjalizacji ADXL345: {e}")
-            self.get_logger().error("Sprawdź połączenia i adres I2C (0x53 lub 0x1D).")
-            # Kontynuuj bez IMU lub zakończ w zależności od potrzeb
-
-        # Offsety dla IMU
-        self.X_OFFSET = 0.06   # Dla oryginalnego X (bocznego)
-        self.Y_OFFSET = 0.10   # Dla oryginalnego Y (wzdłużnego, po zamianie na X)
-        self.Z_OFFSET = -10.19 # Korekcja Z względem grawitacji
-        self.history = []
-        self.WINDOW_SIZE = 5  # Liczba próbek do uśrednienia
-
         # --- Zmienne Stanu Odometrii ---
         self.x = 0.0
         self.y = 0.0
@@ -125,9 +105,8 @@ class OdometryPublisher(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
         self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', 10)
-        self.imu_publisher = self.create_publisher(Imu, 'imu', 10)
         self.timer = self.create_timer(0.02, self.update_odometry)  # 50 Hz
-        self.get_logger().info("OdometryPublisher node started with full quadrature decoding, separate angular slip factors, and IMU integration.")
+        self.get_logger().info("OdometryPublisher node started with full quadrature decoding and separate angular slip factors.")
 
     def update_odometry(self):
         current_time = self.get_clock().now()
@@ -245,34 +224,6 @@ class OdometryPublisher(Node):
         odom_msg.twist.twist.linear.x = delta_linear / dt if dt > 0 else 0.0
         odom_msg.twist.twist.angular.z = delta_angular / dt if dt > 0 else 0.0
         self.odom_publisher.publish(odom_msg)
-
-        # --- SEKCJA ODCZYTU I PUBLIKACJI IMU ---
-        if hasattr(self, 'accelerometer'):
-            x, y, z = self.accelerometer.acceleration
-            # Zamiana osi X i Y oraz odwrócenie znaku X
-            x_corrected = -y - self.Y_OFFSET  # Oryginalne Y staje się nowym X (wzdłużnym), odwrócone
-            y_corrected = x - self.X_OFFSET   # Oryginalne X staje się nowym Y (bocznym)
-            z_corrected = z - self.Z_OFFSET   # Korekcja Z względem grawitacji
-            self.history.append((x_corrected, y_corrected, z_corrected))
-            if len(self.history) > self.WINDOW_SIZE:
-                self.history.pop(0)
-            x_avg = sum([h[0] for h in self.history]) / len(self.history)
-            y_avg = sum([h[1] for h in self.history]) / len(self.history)
-            z_avg = sum([h[2] for h in self.history]) / len(self.history)
-
-            # Tworzenie i publikacja wiadomości IMU
-            imu_msg = Imu()
-            imu_msg.header.stamp = current_time.to_msg()
-            imu_msg.header.frame_id = 'base_link'  # Zakładamy, że IMU jest zamontowane na base_link; w razie potrzeby zmień na 'imu_link'
-            imu_msg.linear_acceleration.x = x_avg
-            imu_msg.linear_acceleration.y = y_avg
-            imu_msg.linear_acceleration.z = z_avg
-            # Kovariancje: małe dla akceleracji liniowej, duże dla reszty (brak gyro i orientacji)
-            imu_msg.linear_acceleration_covariance = [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
-            imu_msg.angular_velocity_covariance = [99999.0] * 9
-            imu_msg.orientation_covariance = [99999.0] * 9
-            imu_msg.orientation.w = 1.0  # Domyślna orientacja
-            self.imu_publisher.publish(imu_msg)
 
     def destroy_node(self):
         GPIO.cleanup()

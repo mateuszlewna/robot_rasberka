@@ -64,8 +64,10 @@ class OdometryPublisher(Node):
         self.wheel_separation = 0.269
         self.ticks_per_revolution = 2373  # Zachowana wartość
         self.linear_slip_factor = 1.437  # do ruchu liniowego
-        self.angular_slip_factor_left = 1.164  # Dla obrotu w lewo
-        self.angular_slip_factor_right = 1.155  # Dla obrotu w prawo 
+        self.angular_slip_factor_rotation_left = 1.164  # Dla obrotu w lewo
+        self.angular_slip_factor_rotation_right = 1.155  # Dla obrotu w prawo 
+        self.angular_slip_factor_arc_left = 2.4  # Dla łuków w lewo
+        self.angular_slip_factor_arc_right = 2.4  # Dla łuków w prawo
 
         # --- Piny GPIO dla enkoderów (numery BCM) ---
         self.front_left_encoder_pin_a = 26
@@ -170,7 +172,7 @@ class OdometryPublisher(Node):
         delta_linear = (delta_left_wheel_dist + delta_right_wheel_dist) / 2.0 * self.linear_slip_factor
         
         # Dodanie progu MIN_TICK_DIFF
-        MIN_TICK_DIFF = 5
+        MIN_TICK_DIFF = 3
         delta_ticks_left = (delta_ticks_front_left + delta_ticks_rear_left) / 2.0
         delta_ticks_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
         if abs(delta_ticks_left - delta_ticks_right) < MIN_TICK_DIFF:
@@ -179,11 +181,13 @@ class OdometryPublisher(Node):
             delta_angular = (delta_right_wheel_dist - delta_left_wheel_dist) / self.wheel_separation
             # Wykrywanie obrotu w miejscu (przeciwne znaki kół)
             is_rotation = delta_left_wheel_dist * delta_right_wheel_dist < 0
-            angular_slip_factor = self.angular_slip_factor_right if delta_angular >= 0 else self.angular_slip_factor_left
-            if not is_rotation:
-                delta_angular = -delta_angular * angular_slip_factor  # Negacja dla łuków
+            if is_rotation:
+                angular_slip_factor = self.angular_slip_factor_rotation_right if delta_angular >= 0 else self.angular_slip_factor_rotation_left
+                delta_angular *= angular_slip_factor
             else:
-                delta_angular *= angular_slip_factor  # Bez negacji dla obrotów
+                # Zmiana: poprawne przypisanie współczynników łuku
+                angular_slip_factor = self.angular_slip_factor_arc_left if delta_angular >= 0 else self.angular_slip_factor_arc_right
+                delta_angular *= angular_slip_factor
 
         self.x += delta_linear * math.cos(self.theta + delta_angular / 2.0)
         self.y += delta_linear * math.sin(self.theta + delta_angular / 2.0)
