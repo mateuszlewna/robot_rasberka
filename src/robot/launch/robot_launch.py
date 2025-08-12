@@ -40,7 +40,7 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
         ),
 
-        # Węzeł 1: Odometria z IMU
+        #Węzeł 1: Odometria z IMU
         # Node(
         #     package=pkg_name,
         #     executable='odometry_IMU',

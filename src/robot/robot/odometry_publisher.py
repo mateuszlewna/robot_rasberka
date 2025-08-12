@@ -148,15 +148,34 @@ class OdometryPublisher(Node):
         delta_ticks_front_right = min(max(delta_ticks_front_right, -MAX_TICKS_PER_CYCLE), MAX_TICKS_PER_CYCLE)
         delta_ticks_rear_right = min(max(delta_ticks_rear_right, -MAX_TICKS_PER_CYCLE), MAX_TICKS_PER_CYCLE)
 
-        # Korekcja różnic między kołami
-        if abs(delta_ticks_front_left - delta_ticks_rear_left) > 50:
-            delta_ticks_front_left = delta_ticks_rear_left = (delta_ticks_front_left + delta_ticks_rear_left) / 2.0
-        if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
-            delta_ticks_front_right = delta_ticks_rear_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
+        # --- Korekcja różnic między kołami ---
+        dist_per_tick = (2 * math.pi * self.wheel_radius) / self.ticks_per_revolution
+        delta_fl_dist = delta_ticks_front_left * dist_per_tick
+        delta_rl_dist = delta_ticks_rear_left * dist_per_tick
+        delta_fr_dist = delta_ticks_front_right * dist_per_tick
+        delta_rr_dist = delta_ticks_rear_right * dist_per_tick
+
+        # Tymczasowe obliczenie delt wheel, aby wykryć typ ruchu (łuk czy rotacja)
+        temp_delta_left_wheel_dist = (delta_fl_dist + delta_rl_dist) / 2.0
+        temp_delta_right_wheel_dist = (delta_fr_dist + delta_rr_dist) / 2.0
+        is_rotation = temp_delta_left_wheel_dist * temp_delta_right_wheel_dist < 0
+        is_arc = (abs(temp_delta_left_wheel_dist - temp_delta_right_wheel_dist) > 0.05) and not is_rotation  # Próg na różnicę dystansów (0.05 m, dostosuj jeśli trzeba)
+
+        # Zabezpieczenie: dla łuków, jeśli duża różnica, bierz wartości z tylnych kół
+        if is_arc:
+            if abs(delta_ticks_front_left - delta_ticks_rear_left) > 50:
+                delta_ticks_front_left = delta_ticks_rear_left  # Bierz z tylnego koła
+            if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
+                delta_ticks_front_right = delta_ticks_rear_right  # Bierz z tylnego koła
+        else:
+            # Dla nie-łuków zachowaj uśrednianie
+            if abs(delta_ticks_front_left - delta_ticks_rear_left) > 50:
+                delta_ticks_front_left = delta_ticks_rear_left = (delta_ticks_front_left + delta_ticks_rear_left) / 2.0
+            if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
+                delta_ticks_front_right = delta_ticks_rear_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
 
         # --- SEKCJA OBLICZEŃ ---
-        dist_per_tick = (2 * math.pi * self.wheel_radius) / self.ticks_per_revolution
-        
+        # Przelicz dystanse po ewentualnej korekcji
         delta_fl_dist = delta_ticks_front_left * dist_per_tick
         delta_rl_dist = delta_ticks_rear_left * dist_per_tick
         delta_fr_dist = delta_ticks_front_right * dist_per_tick
