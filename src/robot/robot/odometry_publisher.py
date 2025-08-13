@@ -66,8 +66,8 @@ class OdometryPublisher(Node):
         self.linear_slip_factor = 1.437  # do ruchu liniowego
         self.angular_slip_factor_rotation_left = 1.164  # Dla obrotu w lewo
         self.angular_slip_factor_rotation_right = 1.155  # Dla obrotu w prawo 
-        self.angular_slip_factor_arc_left = 2.4  # Dla łuków w lewo
-        self.angular_slip_factor_arc_right = 2.4  # Dla łuków w prawo
+        self.angular_slip_factor_arc_left = 1.2  # Dla łuków w lewo
+        self.angular_slip_factor_arc_right = 1.29  # Dla łuków w prawo
 
         # --- Piny GPIO dla enkoderów (numery BCM) ---
         self.front_left_encoder_pin_a = 26

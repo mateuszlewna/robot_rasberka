@@ -14,7 +14,7 @@ MAKSYMALNA_PREDKOSC = 0.6  # z stepdownem
 #MAKSYMALNA_PREDKOSC = 0.35 # bez stepdowna
 
 # Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyniki i robot jedzie w miarę prosto.
-WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.95
+WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.9
 WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.7
 
 # Współczynniki dla skrętu po łuku (z drugiego skryptu)
