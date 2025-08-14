@@ -31,6 +31,7 @@ setup(
             'odometry_publisher = robot.odometry_publisher:main',
             'motor_controller_node = robot.motor_controller_node:main',
             'odometry_IMU = robot.odometry_IMU:main',
+            'akcelerometr = robot.akcelerometr:main', 
             #'teleop_keyboard_node = robot.teleop_keyboard_node:main',
         ],
     },

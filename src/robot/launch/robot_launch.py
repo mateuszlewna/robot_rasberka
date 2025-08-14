@@ -40,17 +40,17 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
         ),
 
-        # # Węzeł 1: Akcelerometr (opublikowane dane IMU z akcelerometru)
-        # Node(
-        #     package=pkg_name,
-        #     executable='accelerometer.py',  # Nazwa pliku z kodem akcelerometru
-        #     name='accelerometer_publisher',
-        #     output='screen',
-        #     parameters=[{'use_sim_time': use_sim_time}],
-        # ),
+        # Węzeł 2: Akcelerometr (opublikowane dane IMU z akcelerometru)
+        Node(
+            package=pkg_name,
+            executable='akcelerometr',  # Zmienione na akcelerometr
+            name='accelerometer_publisher',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}],
+        ),
 
 
-        # Węzeł 2: Robot State Publisher
+        # Węzeł 3: Robot State Publisher
         Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
@@ -62,7 +62,7 @@ def generate_launch_description():
             ],
         ),
 
-        # Węzeł 3: Lidar
+        # Węzeł 4: Lidar
         Node(
             package='rplidar_ros',
             executable='rplidar_composition',
@@ -77,7 +77,7 @@ def generate_launch_description():
             ]
         ),
 
-        # Węzeł 4: TF2 Buffer Server
+        # Węzeł 5: TF2 Buffer Server
         Node(
             package='tf2_ros',
             executable='buffer_server',
@@ -89,13 +89,13 @@ def generate_launch_description():
             ]
         ),
 
-        # Węzeł 5: Motor controller
+        # Węzeł 6: Motor controller
 
-        #  Node(
-        #     package='robot',
-        #     executable='motor_controller_node', 
-        #     name='motor_controller',
-        #     output='screen'
-        # ),
+         Node(
+            package='robot',
+            executable='motor_controller_node', 
+            name='motor_controller',
+            output='screen'
+        ),
 
     ])
