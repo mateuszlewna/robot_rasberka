@@ -40,14 +40,15 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}],
         ),
 
-        #Węzeł 1: Odometria z IMU
+        # # Węzeł 1: Akcelerometr (opublikowane dane IMU z akcelerometru)
         # Node(
         #     package=pkg_name,
-        #     executable='odometry_IMU',
-        #     name='robot_odometry_imu_publisher',
+        #     executable='accelerometer.py',  # Nazwa pliku z kodem akcelerometru
+        #     name='accelerometer_publisher',
         #     output='screen',
         #     parameters=[{'use_sim_time': use_sim_time}],
         # ),
+
 
         # Węzeł 2: Robot State Publisher
         Node(
