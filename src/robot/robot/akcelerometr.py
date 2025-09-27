@@ -41,27 +41,16 @@ class AccelerometerPublisher(Node):
         imu_msg.linear_acceleration.x = -y - self.Y_OFFSET
         imu_msg.linear_acceleration.y = x - self.X_OFFSET
         imu_msg.linear_acceleration.z = z - self.Z_OFFSET
-
-        # Akcelerometr nie dostarcza danych o orientacji ani prędkości kątowej,
-        # więc te pola muszą być wypełnione zerami, aby filtr EKF wiedział,
-        # że ma je zignorować.
         imu_msg.angular_velocity.x = 0.0
         imu_msg.angular_velocity.y = 0.0
         imu_msg.angular_velocity.z = 0.0
-        
-        # Ustawiamy orientację na zero - EKF będzie ją ignorować
         imu_msg.orientation.x = 0.0
         imu_msg.orientation.y = 0.0
         imu_msg.orientation.z = 0.0
         imu_msg.orientation.w = 1.0
-
-        # Wypełniamy macierze kowariancji, aby poinformować filtr EKF,
-        # które dane są wiarygodne, a które nie.
-        # W tym przypadku mamy tylko wiarygodne dane z przyspieszenia.
-        # Duża liczba (np. 99999) oznacza, że dane są niewiarygodne.
-        imu_msg.orientation_covariance[0] = -1.0 # -1.0 specjalny znacznik dla "nieużywany"
+        imu_msg.orientation_covariance[0] = -1.0 
         imu_msg.angular_velocity_covariance[0] = -1.0 
-        imu_msg.linear_acceleration_covariance[0] = 0.04 # Mała wartość, bo wierzymy w dane
+        imu_msg.linear_acceleration_covariance[0] = 0.04 
         imu_msg.linear_acceleration_covariance[4] = 0.04
         imu_msg.linear_acceleration_covariance[8] = 0.04
 

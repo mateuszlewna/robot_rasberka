@@ -22,7 +22,7 @@ class OdomSubscriber(Node):
             self.odom_callback,
             10)
         
-        # --- ZMIENNE DO ZLICZANIA OBROTÓW I ZAPISU ---
+        # zmienne do zliczania obrotów
         self.rotation_count = 0
         self.last_yaw_deg = 0.0
         self.current_yaw_deg = 0.0
@@ -44,12 +44,10 @@ class OdomSubscriber(Node):
         yaw_rad = euler_from_quaternion(x, y, z, w)
         yaw_deg = math.degrees(yaw_rad)
         
-        # --- NOWA, PROSTSZA LOGIKA ZLICZANIA OBROTÓW ---
+        
         with self.lock:
-            # Sprawdź, czy kąt przekroczył granicę +180 stopni (przeskok z dużej wartości dodatniej na ujemną)
             if (self.last_yaw_deg > 150.0 and yaw_deg < -150.0):
                 self.rotation_count += 1
-            # Sprawdź, czy kąt przekroczył granicę -180 stopni (przeskok z dużej wartości ujemnej na dodatnią)
             elif (self.last_yaw_deg < -150.0 and yaw_deg > 150.0):
                 self.rotation_count -= 1
             

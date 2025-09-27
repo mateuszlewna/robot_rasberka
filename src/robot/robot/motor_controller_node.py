@@ -5,17 +5,17 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from rclpy.duration import Duration
 
-# ###########################################################################
-# ## OSTATECZNE WARTOŚCI KALIBRACYJNE
-# ###########################################################################
+
+# OSTATECZNE WARTOŚCI KALIBRACYJNE
+
 
 # Ograniczenie prędkości do niezawodnego poziomu, przy którym enkodery nie gubią impulsów.
-MAKSYMALNA_PREDKOSC = 0.6  # z stepdownem
+MAKSYMALNA_PREDKOSC = 0.7  # z stepdownem
 #MAKSYMALNA_PREDKOSC = 0.35 # bez stepdowna
 
 # Współczynnik do spowolnienia szybszej, prawej strony prawidłowo około 0.9 daje najlepsze wyniki i robot jedzie w miarę prosto.
 WSPOLCZYNNIK_KOREKCYJNY_PRAWEJ_STRONY = 0.9
-WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.7
+WSPOLCZYNNIK_KOREKCYJNY_OBROTOW = 0.8
 
 # Współczynniki dla skrętu po łuku (z drugiego skryptu)
 TURN_SLOW_SPEED_FACTOR = 0.3  # 30% prędkości dla wolniejszego silnika podczas skrętu
@@ -25,9 +25,7 @@ TURN_FAST_SPEED_FACTOR = 1.0  # 100% prędkości dla szybszego silnika podczas s
 # MINIMUM_NAV2_SPEED = 0.6 * MAKSYMALNA_PREDKOSC
 # NAV2_THRESHOLD = 0.2  # Próg dla wykrywania małych wartości z Nav2
 
-# ###########################################################################
-# ## KONFIGURACJA SPRZĘTOWA
-# ###########################################################################
+
 
 # Piny sterujące dla lewej strony (w kodzie jako Motor 1)
 MOTOR1_PWM_PIN = 12

@@ -59,7 +59,7 @@ class OdometryPublisher(Node):
     def __init__(self):
         super().__init__('robot_odometry_publisher')
 
-        # --- Parametry Robota ---
+        #  Parametry Robota 
         self.wheel_radius = 0.0325
         self.wheel_separation = 0.269
         self.ticks_per_revolution = 2373  # Zachowana wartość
@@ -69,7 +69,7 @@ class OdometryPublisher(Node):
         self.angular_slip_factor_arc_left = 1.2  # Dla łuków w lewo
         self.angular_slip_factor_arc_right = 1.29  # Dla łuków w prawo
 
-        # --- Piny GPIO dla enkoderów (numery BCM) ---
+        # Piny GPIO dla enkoderów 
         self.front_left_encoder_pin_a = 26
         self.front_left_encoder_pin_b = 15
         self.rear_left_encoder_pin_a = 21
@@ -79,17 +79,17 @@ class OdometryPublisher(Node):
         self.rear_right_encoder_pin_a = 16
         self.rear_right_encoder_pin_b = 25
 
-        # --- Inicjalizacja GPIO ---
+        # Inicjalizacja GPIO 
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        # --- Inicjalizacja obiektów enkoderów ---
+        # Inicjalizacja obiektów enkoderów 
         self.front_left_encoder = Encoder(self.front_left_encoder_pin_a, self.front_left_encoder_pin_b, "front_left")
         self.rear_left_encoder = Encoder(self.rear_left_encoder_pin_a, self.rear_left_encoder_pin_b, "rear_left")
         self.front_right_encoder = Encoder(self.front_right_encoder_pin_a, self.front_right_encoder_pin_b, "front_right")
         self.rear_right_encoder = Encoder(self.rear_right_encoder_pin_a, self.rear_right_encoder_pin_b, "rear_right")
 
-        # --- Zmienne Stanu Odometrii ---
+        # Zmienne Stanu Odometrii 
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
@@ -103,7 +103,7 @@ class OdometryPublisher(Node):
             'right_back_wheel_joint': 0.0,
         }
 
-        # --- Inicjalizacja komponentów ROS2 ---
+        # Inicjalizacja komponentów ROS2 
         self.tf_broadcaster = TransformBroadcaster(self)
         self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
         self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', 10)
@@ -117,7 +117,7 @@ class OdometryPublisher(Node):
         if dt == 0:
             return
 
-        # --- SEKCJA ODCZYTU ENKODERÓW ---
+        # SEKCJA ODCZYTU ENKODERÓW 
         delta_ticks_front_left = self.front_left_encoder.get_count()
         delta_ticks_rear_left = self.rear_left_encoder.get_count()
         delta_ticks_front_right = -self.front_right_encoder.get_count()  # Negacja zachowana
@@ -148,7 +148,7 @@ class OdometryPublisher(Node):
         delta_ticks_front_right = min(max(delta_ticks_front_right, -MAX_TICKS_PER_CYCLE), MAX_TICKS_PER_CYCLE)
         delta_ticks_rear_right = min(max(delta_ticks_rear_right, -MAX_TICKS_PER_CYCLE), MAX_TICKS_PER_CYCLE)
 
-        # --- Korekcja różnic między kołami ---
+        # Korekcja różnic między kołami
         dist_per_tick = (2 * math.pi * self.wheel_radius) / self.ticks_per_revolution
         delta_fl_dist = delta_ticks_front_left * dist_per_tick
         delta_rl_dist = delta_ticks_rear_left * dist_per_tick
@@ -159,29 +159,29 @@ class OdometryPublisher(Node):
         temp_delta_left_wheel_dist = (delta_fl_dist + delta_rl_dist) / 2.0
         temp_delta_right_wheel_dist = (delta_fr_dist + delta_rr_dist) / 2.0
         is_rotation = temp_delta_left_wheel_dist * temp_delta_right_wheel_dist < 0
-        is_arc = (abs(temp_delta_left_wheel_dist - temp_delta_right_wheel_dist) > 0.05) and not is_rotation  # Próg na różnicę dystansów (0.05 m, dostosuj jeśli trzeba)
+        is_arc = (abs(temp_delta_left_wheel_dist - temp_delta_right_wheel_dist) > 0.05) and not is_rotation  # Próg na różnicę dystansów (0.05 m)
 
-        # Zabezpieczenie: dla łuków, jeśli duża różnica, bierz wartości z tylnych kół
+        # Zabezpieczenie: dla łuków, jeśli duża różnica,  wartości z tylnych kół
         if is_arc:
             if abs(delta_ticks_front_left - delta_ticks_rear_left) > 50:
-                delta_ticks_front_left = delta_ticks_rear_left  # Bierz z tylnego koła
+                delta_ticks_front_left = delta_ticks_rear_left  # wartości z tylniego koła
             if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
-                delta_ticks_front_right = delta_ticks_rear_right  # Bierz z tylnego koła
+                delta_ticks_front_right = delta_ticks_rear_right  # wartości z tylniego koła
         else:
-            # Dla nie-łuków zachowaj uśrednianie
+            # Dla nie-łuków 
             if abs(delta_ticks_front_left - delta_ticks_rear_left) > 50:
                 delta_ticks_front_left = delta_ticks_rear_left = (delta_ticks_front_left + delta_ticks_rear_left) / 2.0
             if abs(delta_ticks_front_right - delta_ticks_rear_right) > 50:
                 delta_ticks_front_right = delta_ticks_rear_right = (delta_ticks_front_right + delta_ticks_rear_right) / 2.0
-
-        # --- SEKCJA OBLICZEŃ ---
-        # Przelicz dystanse po ewentualnej korekcji
+zachowaj uśrednianie
+        # Obliczenia
+        # Przeliczanie dystansu po ewentualnej korekcji
         delta_fl_dist = delta_ticks_front_left * dist_per_tick
         delta_rl_dist = delta_ticks_rear_left * dist_per_tick
         delta_fr_dist = delta_ticks_front_right * dist_per_tick
         delta_rr_dist = delta_ticks_rear_right * dist_per_tick
 
-        # Uśrednienie dystansu z wygładzaniem
+        # Uśrednienianie dystansu z wygładzaniem
         alpha = 0.8
         delta_left_wheel_dist = alpha * ((delta_fl_dist + delta_rl_dist) / 2.0) + (1 - alpha) * self.prev_delta_left
         delta_right_wheel_dist = alpha * ((delta_fr_dist + delta_rr_dist) / 2.0) + (1 - alpha) * self.prev_delta_right
@@ -204,7 +204,7 @@ class OdometryPublisher(Node):
                 angular_slip_factor = self.angular_slip_factor_rotation_right if delta_angular >= 0 else self.angular_slip_factor_rotation_left
                 delta_angular *= angular_slip_factor
             else:
-                # Zmiana: poprawne przypisanie współczynników łuku
+                #  współczynniki dla łuku
                 angular_slip_factor = self.angular_slip_factor_arc_left if delta_angular >= 0 else self.angular_slip_factor_arc_right
                 delta_angular *= angular_slip_factor
 
